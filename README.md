@@ -19,4 +19,24 @@ A OS possui um **relacionamento com a tabela de orçamento**, para registrar os 
 
 Já os **mecânicos foram vinculados à entidade-relacionamento "Equipe"**, que os conecta à OS, tornando o sistema mais distribuído e organizado.  
 
+# Segunda parte do projeto
+Agora na segunda parte o desafio proposto foi ajustar alguns pontos na modelagem inicial para que pudesse ser feito a criação do banco de dados e alguns testes de perguntas que podem ser respondidas.
+### Pontos que ajustei na minha modelagem
+1. Criei um campo separado para pagamento, para que possa ser adicionado mais de uma forma de pagamento,
+2. Criação de 2 tabelas, uma para CPF e uma para CNPJ. Utilizei a tabela de CPF tanto para clientes quanto para funcionarios, sendo dividido pelo tipo.O CNPJ era exclusivamente para clientes.
+3. Adicionei uma tabela intermediaria entre funcionarios e equipes para que uma equipe possa ter mais de um funcionario.
+### Como fiz a minha criação
+1. Defini toda a minha tabela conforme estava no modelo, começando pelas tabelas que não iriam precisar de nenhuma chave estrangeira,
+2. Definir um trigger para que meu cliente possa escolher entre um CNPJ ou um CPF,
+3. Adicionei tanto mas minhas chaves primarias quanto as minhas chaves estrangeiras em constraint para que eu pudesse recupera-las depois.
+4. 
+### Insights que podem ser retirados do meu banco de dados
+1. Quais metodos de pagamento mais usados?
+2. Qual serviço é mais vendido?
+3. Qual equipe atende mais?
+4. Quantos serviços ja foram finalizar e quantos foram cancelados?
+5. Qual marca mais é solicitado o conserto?
+6. Quais pecas são mais requisitadas?
+
 ### Amei o processo de criação do projeto, estou muito orgulhosa do meu resultado e sempre aberta a dicas de melhorias!
+
