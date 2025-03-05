@@ -1,0 +1,159 @@
+-- criando banco de dados
+create database oficina;
+use oficina;
+-- criando tabela de CPF
+create table CPF(
+	id_cpf int auto_increment ,
+	CPF char(11) not null unique,
+    Pnome varchar(45) not null,
+    Sobrenome varchar(60),
+	telefone varchar(14) not null,
+    data_criacao datetime not null default current_timestamp,
+    tipo enum("Cliente", "Funcionario"),
+    
+    constraint pk_id_cpf primary key (id_cpf)
+    
+);
+-- criando tabela CNPJ
+create table CPNJ(
+	id_cnpj int auto_increment,
+    CNPJ char(14) not null unique,
+    inscricao_estadual varchar(12) unique,
+    razao_social varchar(100) not null,
+    telefone varchar(14) not null,
+    email varchar(70) not null,
+    data_criacao datetime not null default current_timestamp,
+    
+    constraint pk_id_cnpj primary key (id_cnpj)
+);
+-- criando tabela clientes
+create table clientes(
+	id_clientes int auto_increment ,
+    id_cpf int,
+    id_cnpj int,
+	rua varchar(45) not null,
+    CEP char(9) not null,
+    bairro varchar(45) not null,
+    cidade varchar(45) not null,
+    estado enum('Acre', 'Alagoas', 'Amapá', 'Amazonas', 'Bahia', 'Ceará', 'Distrito Federal', 'Espírito Santo', 'Goiás', 'Maranhão', 'Mato Grosso', 'Mato Grosso do Sul', 
+    'Minas Gerais', 'Pará', 'Paraíba', 'Paraná', 'Pernambuco', 'Piauí', 
+    'Rio de Janeiro', 'Rio Grande do Norte', 'Rio Grande do Sul', 'Rondônia', 'Roraima', 'Santa Catarina', 'São Paulo', 'Sergipe', 'Tocantins') not null,
+	
+    constraint pk_id_clientes primary key (id_clientes),
+    constraint fk_cpf foreign key (id_cpf) references CPF(id_cpf) on delete cascade on update cascade,
+    constraint fk_cnpj foreign key (id_cnpj) references CPNJ(id_cnpj) on delete cascade on update cascade
+	);
+    
+-- trigger para validar o cnpj ou o cpf
+DELIMITER $$
+
+CREATE TRIGGER validar_cnpj_cpf_cliente
+BEFORE INSERT ON clientes
+FOR EACH ROW
+BEGIN
+    IF (NEW.id_cnpj IS NOT NULL AND NEW.id_cpf IS NOT NULL) OR 
+       (NEW.id_cnpj IS NULL AND NEW.id_cpf IS NULL) THEN
+        SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT = 'O cliente deve ter apenas um identificador: CNPJ ou CPF.';
+    END IF;
+END $$
+
+DELIMITER ;
+    
+-- criando tabela para veiculo
+create table veiculo(
+	id_veiculo int auto_increment,
+	placa char(7) not null unique,
+    id_clientes int not null,
+    ano int not null,
+    marca varchar(50) not null,
+    modelo varchar(50) not null,
+    
+    constraint pk_id_veiculo primary key (id_veiculo),
+    constraint fk_cpf_veiculo foreign key (id_clientes) references clientes(id_clientes) on delete cascade on update cascade
+);
+-- criando tabela mecanico
+create table mecanico(
+	id_mecanico int auto_increment,
+	id_cpf_mecanico int not null,
+    nome_mecanico varchar(150) not null,
+    especialidade enum('Mecânico Geral', 'Especialista em Freios', 'Especialista em Suspensão', 'Especialista em Motor', 'Especialista em Câmbio', 'Especialista em Elétrica',
+    'Especialista em Arrefecimento', 'Especialista em Injeção Eletrônica', 'Funileiro', 'Pintor Automotivo', 'Alinhador e Balanceador'),
+    
+    constraint pk_id_mecanico primary key (id_mecanico),
+    constraint fk_cpf_mecanico foreign key (id_cpf_mecanico) references CPF(id_cpf) on delete cascade on update cascade
+);
+
+-- criando tabela equipe
+create table equipe(
+	id_equipe int auto_increment,
+    nome_equipe varchar(49),
+    
+    constraint pk_id_equipe primary key (id_equipe)
+);
+-- criando tabela intermediaria
+create table mecanico_has_equipe(
+	id_mecanico int not null,
+    id_equipe int not null,
+    
+	constraint fk_equipe foreign key (id_equipe) references equipe(id_equipe) on delete cascade on update cascade,
+	constraint fk_mecanico foreign key (id_mecanico) references mecanico(id_mecanico) on delete cascade on update cascade,
+    primary key (id_mecanico, id_equipe)
+);
+-- criando tabela de peças
+create table pecas(
+	id_pecas int auto_increment not null,
+    nome_pecas varchar(100) not null,
+    valor_pecas decimal(10,2) not null,
+    
+    constraint pk_pecas primary key (id_pecas)
+);
+
+-- criando tabela de servicos
+create table servico(
+	id_servico int auto_increment,
+    nome_servico varchar(150) not null,
+    valor_servico decimal(10,2) not null,
+    
+    constraint pk_id_servico primary key (id_servico)
+);
+-- criando metodos de pagamento
+create table metodos_pagamento(
+	id_pagamento int auto_increment,
+    id_orcamento int not null,
+    metodo_pagamento enum("PIX", "Boleto", "Dinheiro", "Cartao", "Credito") not null,
+    valor decimal(10,2) not null,
+    
+    
+    constraint pk_pagamento primary key (id_pagamento),
+    constraint fk_orcamento foreign key (id_orcamento) references orcamento(id_orcamento) on delete cascade on update cascade
+);
+-- criando tabela de orçamento
+create table orcamento(
+	id_orcamento int auto_increment,
+    id_servicos int not null,
+    id_pecas int not null,
+    autorizado bool not null,
+    
+    constraint pk_orcamento primary key (id_orcamento),
+    constraint fk_servicos foreign key (id_servicos) references servico(id_servico) on delete cascade on update cascade,
+    constraint fk_pecas foreign key (id_pecas) references pecas(id_pecas) on delete cascade on update cascade
+);
+
+-- criando tabela de ordem de servico
+create table ordem_servico(
+	id_ordem int auto_increment,
+    id_orcamento int not null,
+    id_equipe int not null,
+    id_veiculo int not null,
+    data_emissao datetime not null default current_timestamp,
+    data_finalizado datetime not null,
+    status_servico enum("Em andamento", "Finalizado", "Aguardando peca", "Desistencia") not null,
+	valor_total decimal(10,2) not null,
+    
+    constraint pk_ordem primary key (id_ordem),
+	constraint fk_orcamento_ordem foreign key (id_orcamento) references orcamento(id_orcamento) on delete cascade on update cascade,
+    constraint fk_equipe_ordem foreign key (id_equipe) references equipe(id_equipe) on delete cascade on update cascade,
+	constraint fk_veiculo foreign key (id_veiculo) references veiculo(id_veiculo) on delete cascade on update cascade
+);
+
